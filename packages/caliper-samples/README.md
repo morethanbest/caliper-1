@@ -23,6 +23,11 @@ caliper benchmark run -w <workspace path> -c benchmark/composer/config.yaml -n n
 caliper benchmark run -w <workspace path> -c benchmark/simple/config-sawtooth.yaml -n network/sawtooth/simplenetwork/sawtooth.json 
 ```
 
+- FISCO BCOS
+```
+caliper benchmark run -w <workspace path> -c benchmark/fisco-bcos/transfer/solidity/config.yaml -n network/fisco-bcos/4nodes1group/fisco-bcos.json
+```
+
 ## Benchmarks Under Construction
 
 - Burrow
