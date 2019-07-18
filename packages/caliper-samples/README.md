@@ -40,6 +40,11 @@ caliper benchmark run -w <workspace path> -c benchmark/simple/config.yaml -n net
 caliper benchmark run -w <workspace path> -c benchmark/simple/config-iroha.yaml -n network/iroha/simplenetwork/iroha.json 
 ```
 
+- FISCO BCOS
+```bash
+caliper benchmark run -w <workspace path> -c benchmark/fisco-bcos/transfer/solidity/config.yaml -n network/fisco-bcos/4nodes1group/fisco-bcos.json
+```
+
 ## Starting and using a Zookeeper client
 
 ```bash
