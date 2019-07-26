@@ -65,7 +65,7 @@ const thirdPartyPackages = [
             for (let i = 0; i < NPM_RETRIES; i++) {
                 console.log(`Installing test package ${p}@${version} from local npm server (attempt ${i+1}/${NPM_RETRIES})`);
                 try {
-                    await invokeCmd(`npm install --registry http://localhost:4873 -g ${p}@${version}`);
+                    await invokeCmd(`npm install --allow-root --unsafe-perm=true --registry http://localhost:4873 -g ${p}@${version}`);
                     console.log(`Installed test package ${p} from local npm server (attempt ${i+1}/${NPM_RETRIES})`);
                     published = true;
                     break;
@@ -86,7 +86,7 @@ const thirdPartyPackages = [
             for (let i = 0; i < NPM_RETRIES; i++) {
                 console.log(`Installing third party package ${p} from public npm server (attempt ${i+1}/${NPM_RETRIES})`);
                 try {
-                    await invokeCmd(`npm install -g ${p}`);
+                    await invokeCmd(`npm install --allow-root --unsafe-perm=true -g ${p}`);
                     console.log(`Installed third party package ${p} from public npm server (attempt ${i+1}/${NPM_RETRIES})`);
                     published = true;
                     break;
