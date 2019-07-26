@@ -18,9 +18,13 @@ const ReportBuilder = require('./report-builder');
 const Blockchain = require('../blockchain');
 const CaliperUtils = require('../utils/caliper-utils');
 const logger = CaliperUtils.getLogger('report-builder');
+const fs = require('fs');
 
 const table = require('table');
-
+let finalJson = {
+    timestamp: Date.now(),
+    rounds: []
+};
 /**
  * Class for building a report
  */
@@ -171,7 +175,16 @@ class Report {
                 r.label = label;
                 resultTable[1] = this.getResultValue(r);
             }
-
+            let newRound = {
+                name: resultTable[1][0],
+                success: resultTable[1][1],
+                failed: resultTable[1][2],
+                sendRate: resultTable[1][3],
+                maxLatency: resultTable[1][4],
+                minLatency: resultTable[1][5],
+                throughput: resultTable[1][6],
+                resource: []
+            };
             let sTP = r.sTPTotal / r.length;
             let sT = r.sTTotal / r.length;
             logger.debug('sendTransactionProposal: ' + sTP + 'ms length: ' + r.length);
@@ -188,6 +201,23 @@ class Report {
             let idx = this.reportBuilder.addBenchmarkRound(label);
             this.reportBuilder.setRoundPerformance(label, idx, resultTable);
             let resourceTable = this.monitor.getDefaultStats();
+            for (let i = 1; i < resourceTable.length; i++) {
+                let rJson = {
+                    type: resourceTable[i][0],
+                    name: resourceTable[i][1],
+                    maxCPU: resourceTable[i][2],
+                    avgCPU: resourceTable[i][3],
+                    maxMemory: resourceTable[i][4],
+                    avgMemory: resourceTable[i][5],
+                    trafficIn: resourceTable[i][6],
+                    trafficOut: resourceTable[i][7],
+                    discRead: resourceTable[i][8],
+                    discWrite: resourceTable[i][9],
+                };
+                newRound.resource.push(rJson);
+            }
+            finalJson.rounds.push(newRound);
+            fs.writeFileSync('report.json', JSON.stringify(finalJson));
             if (resourceTable.length > 0) {
                 logger.info('### resource stats ###');
                 this.printTable(resourceTable);
