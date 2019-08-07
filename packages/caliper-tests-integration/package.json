@@ -46,7 +46,8 @@
       ".pm2/touch",
       "storage",
       "scripts/storage",
-      "log"
+      "log",
+      ".DS_Store"
     ],
     "file_type_method": "EXCLUDE",
     "file_types": [
