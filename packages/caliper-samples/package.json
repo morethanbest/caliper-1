@@ -15,7 +15,9 @@
     "node": ">=8.10.0",
     "npm": ">=5.6.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "uuid": "^3.3.2"
+  },
   "devDependencies": {
     "license-check-and-add": "2.3.6"
   },
@@ -40,7 +42,8 @@
       "network/fabric-v1.4.1/raft/config/.gitignore",
       "src/contract/sawtooth/simple/simple_python/simple-tp-python",
       "src/contract/sawtooth/simple/simple_python/packaging/systemd/sawtooth-simple-tp-python",
-      "src/contract/sawtooth/docker/sawtooth-int-simple-tp-python"
+      "src/contract/sawtooth/docker/sawtooth-int-simple-tp-python",
+      "network/fisco-bcos/4nodes1group"
     ],
     "file_type_method": "EXCLUDE",
     "file_types": [
