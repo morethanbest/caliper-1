@@ -16,22 +16,22 @@
                 {
                     "ip": "127.0.0.1",
                     "rpcPort": "8545",
-                    "channelPort": "30300"
+                    "channelPort": "20200"
                 },
                 {
                     "ip": "127.0.0.1",
                     "rpcPort": "8546",
-                    "channelPort": "30301"
+                    "channelPort": "20201"
                 },
                 {
                     "ip": "127.0.0.1",
                     "rpcPort": "8547",
-                    "channelPort": "30302"
+                    "channelPort": "20202"
                 },
                 {
                     "ip": "127.0.0.1",
                     "rpcPort": "8548",
-                    "channelPort": "30303"
+                    "channelPort": "20203"
                 }
             ],
             "authentication": {
