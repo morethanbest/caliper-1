@@ -15,13 +15,12 @@
 'use strict';
 
 const FabricClient = require('fabric-client');
+let FabricNetworkAPI = require('fabric-network');
 const {google, common} = require('fabric-protos');
-const {BlockchainInterface, CaliperUtils, TxStatus, Version, ConfigUtil} = require('caliper-core');
+const {BlockchainInterface, CaliperUtils, TxStatus, Version, ConfigUtil} = require('@hyperledger/caliper-core');
 const logger = CaliperUtils.getLogger('adapters/fabric');
 
 const FabricNetwork = require('./fabricNetwork.js');
-let FabricNetworkAPI;
-
 const fs = require('fs');
 
 
@@ -157,6 +156,7 @@ class Fabric extends BlockchainInterface {
         this.randomTargetOrdererCache = new Map();
         this.defaultInvoker = Array.from(this.networkUtil.getClients())[0];
         this.wallet = undefined;
+        this.fileWalletPath = this.networkUtil.fileWalletPath;
         this.userContracts = new Map();
 
         if (this.networkUtil.isInCompatibilityMode() && this.version.greaterThan('1.1.0')) {
@@ -182,13 +182,13 @@ class Fabric extends BlockchainInterface {
         this.configLocalHost = ConfigUtil.get(ConfigUtil.keys.Fabric.GatewayLocalHost, true);
         this.configDiscovery = ConfigUtil.get(ConfigUtil.keys.Fabric.Discovery, false);
 
-        // Network Gateway is only available in SDK versions greater than v1.4.0
-        if (this.configUseGateway && this.version.lessThan('1.4.0')) {
+        // Network Wallet/Gateway is only available in SDK versions greater than v1.4.0
+        if ((this.configUseGateway || this.fileWalletPath) && this.version.lessThan('1.4.0')) {
             throw new Error(`Fabric SDK ${this.version.toString()} is not supported when using a Fabric Gateway object, use at least version 1.4.0`);
         }
 
         this._prepareCaches();
-        this._prepareGateway();
+        this._prepareWallet();
     }
 
     ////////////////////////////////
@@ -433,7 +433,7 @@ class Fabric extends BlockchainInterface {
                 username: userName,
                 mspid: this.networkUtil.getMspIdOfOrganization(org),
                 cryptoContent: cryptoContent,
-                skipPersistence: false
+                skipPersistence: this.fileWalletPath
             });
         } catch (err) {
             throw new Error(`Couldn't create ${profileName || ''} user object: ${err.message}`);
@@ -673,29 +673,51 @@ class Fabric extends BlockchainInterface {
             // build the common part of the profile
             let adminProfile = await this._prepareClientProfile(org, undefined, `${org}'s admin`);
 
-            // check if the materials already exist locally
-            let admin = await this._getUserContext(adminProfile, adminName, `${org}'s admin`);
+            // Check if the materials already exist locally in file system key-value stores. Only valid if not using a file wallet
+            if (!this.fileWalletPath){
+                let admin = await this._getUserContext(adminProfile, adminName, `${org}'s admin`);
+                if (admin) {
+                    this.adminProfiles.set(org, adminProfile);
 
-            if (admin) {
-                this.adminProfiles.set(org, adminProfile);
+                    if (this.networkUtil.isMutualTlsEnabled()) {
+                        this._setTlsAdminCertAndKey(org);
+                    }
 
-                if (this.networkUtil.isMutualTlsEnabled()) {
-                    this._setTlsAdminCertAndKey(org);
+                    if (initPhase) {
+                        logger.warn(`${org}'s admin's materials found locally in file system key-value stores. Make sure it is the right one!`);
+                    }
+
+                    if (this.configUseGateway && !this.fileWalletPath) {
+                        // Persist in InMemory wallet
+                        await this._addToWallet(org, admin.getIdentity()._certificate, admin.getSigningIdentity()._signer._key.toBytes(), adminName);
+                    }
+                    continue;
                 }
-
-                if (initPhase) {
-                    logger.warn(`${org}'s admin's materials found locally. Make sure it is the right one!`);
-                }
-
-                if (this.configUseGateway) {
-                    await this._addToWallet(org, admin.getIdentity()._certificate, admin.getSigningIdentity()._signer._key.toBytes(), adminName);
-                }
-                continue;
             }
 
-            // set the admin explicitly based on its crypto materials
-            const adminUser = await this._createUser(adminProfile, org, adminName, this.networkUtil.getAdminCryptoContentOfOrganization(org),
-                `${org}'s admin`);
+            // Set the admin explicitly based on its crypto materials either provided in a filewallet or in the connection profile
+            let cryptoContent;
+            if (this.fileWalletPath) {
+                // If a file wallet is provided, it is expected that *all* required identities are provided
+                // Admin is a super-user identity, and is consequently optional
+                const hasAdmin = await this.wallet.exists(adminName);
+                if (!hasAdmin) {
+                    logger.info(`No ${adminName} found in wallet - unable to perform admin options`);
+                    continue;
+                }
+
+                logger.info(`Retriving credentials for ${adminName} from wallet`);
+                const identity = await this.wallet.export(adminName);
+                // Identity {type: string, mspId: string, privateKeyPEM: string, signedCertPEM: string}
+                cryptoContent = {
+                    privateKeyPEM: identity.privateKey,
+                    signedCertPEM: identity.certificate
+                };
+            } else {
+                cryptoContent = this.networkUtil.getAdminCryptoContentOfOrganization(org);
+            }
+
+            const adminUser = await this._createUser(adminProfile, org, adminName, cryptoContent,`${org}'s admin`);
 
             this.adminProfiles.set(org, adminProfile);
 
@@ -703,7 +725,8 @@ class Fabric extends BlockchainInterface {
                 this._setTlsAdminCertAndKey(org);
             }
 
-            if (this.configUseGateway) {
+            if (this.configUseGateway && !this.fileWalletPath) {
+                // Persist in InMemory wallet
                 await this._addToWallet(org, adminUser.getIdentity()._certificate, adminUser.getSigningIdentity()._signer._key.toBytes(), adminName);
             }
 
@@ -745,6 +768,10 @@ class Fabric extends BlockchainInterface {
         for (let org of orgs) {
 
             // providing registrar information is optional and only needed for user registration and enrollment
+            if (this.fileWalletPath) {
+                logger.info('skipping registrar initialisation due to presence of file system wallet');
+                continue;
+            }
             let registrarInfo = this.networkUtil.getRegistrarOfOrganization(org);
             if (!registrarInfo) {
                 if (initPhase) {
@@ -755,12 +782,12 @@ class Fabric extends BlockchainInterface {
 
             // build the common part of the profile
             let registrarProfile = await this._prepareClientProfile(org, undefined, 'registrar');
-            // check if the materials already exist locally
+            // check if the materials already exist locally in th efile system key-value stores
             let registrar = await this._getUserContext(registrarProfile, registrarInfo.enrollId, `${org}'s registrar`);
 
             if (registrar) {
                 if (initPhase) {
-                    logger.warn(`${org}'s registrar's materials found locally. Make sure it is the right one!`);
+                    logger.warn(`${org}'s registrar's materials found locally in file system key-value stores. Make sure it is the right one!`);
                 }
                 this.registrarProfiles.set(org, registrarProfile);
                 continue;
@@ -795,7 +822,7 @@ class Fabric extends BlockchainInterface {
             let clientProfile = await this._prepareClientProfile(org, client, client);
             this.clientProfiles.set(client, clientProfile);
 
-            // check if the materials already exist locally
+            // check if the materials already exist locally in the file system key-value stores
             let user = await this._getUserContext(clientProfile, client, client);
             if (user) {
                 if (this.networkUtil.isMutualTlsEnabled()) {
@@ -804,17 +831,29 @@ class Fabric extends BlockchainInterface {
                 }
 
                 if (initPhase) {
-                    logger.warn(`${client}'s materials found locally. Make sure it is the right one!`);
+                    logger.warn(`${client}'s materials found locally in file system key-value stores. Make sure it is the right one!`);
                 }
 
-                if (this.configUseGateway) {
+                if (this.configUseGateway && !this.fileWalletPath) {
                     // Add identity to wallet
                     await this._addToWallet(org, user.getIdentity()._certificate, user.getSigningIdentity()._signer._key.toBytes(), client);
                 }
                 continue;
             }
 
-            let cryptoContent = this.networkUtil.getClientCryptoContent(client);
+            let cryptoContent;
+            if (this.fileWalletPath) {
+                logger.info(`Retriving credentials for ${client} from wallet`);
+                const identity = await this.wallet.export(client);
+                // Identity {type: string, mspId: string, privateKeyPEM: string, signedCertPEM: string}
+                cryptoContent = {
+                    privateKeyPEM: identity.privateKey,
+                    signedCertPEM: identity.certificate
+                };
+            } else {
+                cryptoContent = this.networkUtil.getClientCryptoContent(client);
+            }
+
             if (cryptoContent) {
                 // the client is already enrolled, just create and persist the User object
                 user = await this._createUser(clientProfile, org, client, cryptoContent, client);
@@ -828,8 +867,8 @@ class Fabric extends BlockchainInterface {
                     logger.info(`${client}'s materials are successfully loaded`);
                 }
 
-                if (this.configUseGateway) {
-                    // Add identity to wallet
+                if (this.configUseGateway && !this.fileWalletPath) {
+                    // Persist in InMemory wallet
                     await this._addToWallet(org, user.getIdentity()._certificate, user.getSigningIdentity()._signer._key.toBytes(), client);
                 }
                 continue;
@@ -953,36 +992,22 @@ class Fabric extends BlockchainInterface {
     async _addToWallet(org, certificate, key, name) {
         const walletId = FabricNetworkAPI.X509WalletMixin.createIdentity(this.networkUtil.getMspIdOfOrganization(org), certificate, key);
         await this.wallet.import(name, walletId);
-        logger.info(`Added ${name} user created and added to wallet`);
+        logger.info(`Identity ${name} created and imported to wallet`);
     }
 
     /**
-     * Extract and persist Contracts from Gateway Networks for admin and client users
+     * Extract and persist Contracts from Gateway Networks for identities listed within the wallet
      * @async
      */
     async _initializeContracts() {
-        // Prepare Admin contracts
-        let orgs = this.networkUtil.getOrganizations();
-        for (let org of orgs) {
-            // Admin is a special case
-            let userName = `admin.${org}`;
+        // Prepare client contracts based on wallet identities only
+        const walletInfoList = await this.wallet.list();
+        for (const info of walletInfoList) {
+            logger.info(`Retrieving and persisting contract map for identity ${info.label}`);
             // Retrieve
-            const contractMap = await this._retrieveContractsForUser(userName);
-
+            const contractMap = await this._retrieveContractsForUser(info.label);
             // Persist
-            logger.info(`Persisting contract map for admin user ${userName}`);
-            this.userContracts.set(userName, contractMap);
-        }
-
-        // Prepare client contracts
-        let clients = this.networkUtil.getClients();
-        for (let client of clients) {
-            // Retrieve
-            const contractMap = await this._retrieveContractsForUser(client);
-
-            // Persist
-            logger.info(`Persisting contract map for user ${client}`);
-            this.userContracts.set(client, contractMap);
+            this.userContracts.set(info.label, contractMap);
         }
     }
 
@@ -1023,14 +1048,15 @@ class Fabric extends BlockchainInterface {
      * @async
      */
     async _retrieveUserGateway(userId) {
-        // Build options for the connection
+        // Build options for the connection (this.wallet is set on _prepareWallet call)
         const opts = {
             wallet: this.wallet,
             identity: userId,
             discovery: {
                 asLocalhost: this.configLocalHost,
                 enabled: this.configDiscovery
-            }
+            },
+            eventHandlerOptions: { commitTimeout: this.configDefaultTimeout }
         };
 
         // Optional on mutual auth
@@ -1555,13 +1581,18 @@ class Fabric extends BlockchainInterface {
     }
 
     /**
-     * Dynamically sets Gateway 'require' and initialises an in memory wallet
+     * Conditionally initialises a wallet depending on user provided options
      * @private
      */
-    _prepareGateway() {
-        if (this.configUseGateway) {
-            FabricNetworkAPI = require('fabric-network');
-            this.wallet = new FabricNetworkAPI.InMemoryWallet();
+    _prepareWallet() {
+        if (this.configUseGateway || this.fileWalletPath) {
+            if (this.fileWalletPath) {
+                logger.info(`Using defined file wallet path ${this.fileWalletPath}`);
+                this.wallet = new FabricNetworkAPI.FileSystemWallet(this.fileWalletPath);
+            } else {
+                logger.info('Creating new InMemoryWallet to persist user identities');
+                this.wallet = new FabricNetworkAPI.InMemoryWallet();
+            }
         }
     }
 
@@ -1599,10 +1630,12 @@ class Fabric extends BlockchainInterface {
             client: this.networkUtil.getClientObject(client)
         });
 
-        try {
-            await profile.initCredentialStores();
-        } catch (err) {
-            throw new Error(`Couldn't initialize the credential stores for ${org}'s ${profileName || 'profile'}: ${err.message}`);
+        if (!this.fileWalletPath) {
+            try {
+                await profile.initCredentialStores();
+            } catch (err) {
+                throw new Error(`Couldn't initialize the credential stores for ${org}'s ${profileName || 'profile'}: ${err.message}`);
+            }
         }
 
         return profile;
@@ -2262,6 +2295,7 @@ class Fabric extends BlockchainInterface {
         await this._initializeRegistrars(true);
         await this._initializeAdmins(true);
         await this._initializeUsers(true);
+        this.initPhaseCompleted = true;
 
         if (await this._createChannels()) {
             logger.info(`Sleeping ${this.configSleepAfterCreateChannel / 1000.0}s...`);
@@ -2279,6 +2313,13 @@ class Fabric extends BlockchainInterface {
      * @async
      */
     async installSmartContract() {
+        // With flow conditioning, this phase is conditionally required
+        if (!this.initPhaseCompleted ) {
+            await this._initializeRegistrars(true);
+            await this._initializeAdmins(true);
+            await this._initializeUsers(true);
+        }
+
         await this._installChaincodes();
         if (await this._instantiateChaincodes()) {
             logger.info(`Sleeping ${this.configSleepAfterInstantiateChaincode / 1000.0}s...`);

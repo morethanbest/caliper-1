@@ -53,15 +53,35 @@ function get(name, defaultValue) {
 }
 
 const keys = {
+    Bind: {
+        Sut: 'caliper-bind-sut',
+        Sdk: 'caliper-bind-sdk',
+        Args: 'caliper-bind-args',
+        Cwd: 'caliper-bind-cwd'
+    },
     Workspace: 'caliper-workspace',
     BenchConfig: 'caliper-benchconfig',
     NetworkConfig: 'caliper-networkconfig',
     ZooAddress: 'caliper-zooaddress',
     ZooConfig: 'caliper-zooconfig',
     TxUpdateTime: 'caliper-txupdatetime',
-    SkipStartScript: 'caliper-skipstartscript',
-    SkipEndScript: 'caliper-skipendscript',
     Logging: 'caliper-logging',
+    Flow: {
+        Skip: {
+            Start : 'caliper-flow-skip-start',
+            Init: 'caliper-flow-skip-init',
+            Install: 'caliper-flow-skip-install',
+            Test: 'caliper-flow-skip-test',
+            End: 'caliper-flow-skip-end'
+        },
+        Only: {
+            Start: 'caliper-flow-only-start',
+            Init: 'caliper-flow-only-init',
+            Install: 'caliper-flow-only-install',
+            Test: 'caliper-flow-only-test',
+            End: 'caliper-flow-only-end'
+        }
+    },
     Fabric: {
         SleepAfter: {
             CreateChannel: 'caliper-fabric-sleepafter-createchannel',

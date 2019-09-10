@@ -32,14 +32,17 @@
     "license": "LICENSE.txt",
     "exact_paths_method": "EXCLUDE",
     "exact_paths": [
+      "CODEOWNERS",
       "LICENSE",
+      ".idea",
       "node_modules",
       ".nyc_output",
       "coverage",
       "scripts",
       ".git",
       ".gitignore",
-      "packages"
+      "packages",
+      "log"
     ],
     "file_type_method": "EXCLUDE",
     "file_types": [

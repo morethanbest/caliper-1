@@ -29,6 +29,7 @@
       "node_modules",
       ".nyc_output",
       "coverage",
+      "log",
       "benchmark/smallbank/.Rhistory",
       "network/burrow/simple/chain/keys/names",
       "network/sawtooth/simplenetwork/Dockerfile",
