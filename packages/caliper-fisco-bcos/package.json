@@ -1,6 +1,6 @@
 {
     "name": "@hyperledger/caliper-fisco-bcos",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Caliper adapter of FISCO BCOS blockchain backend",
     "repository": {
         "type": "git",
