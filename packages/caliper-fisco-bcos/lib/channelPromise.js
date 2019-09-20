@@ -187,7 +187,7 @@ function clearContext(uuid) {
  */
 function channelPromise(node, authentication, data, timeout, readOnly = false) {
     let ip = node.ip;
-    let port = node.port;
+    let port = node.channelPort;
 
     let connectionID = `${ip}${port}`;
     if (!sockets.has(connectionID)) {
