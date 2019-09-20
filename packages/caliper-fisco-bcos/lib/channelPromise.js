@@ -19,7 +19,13 @@ const fs = require('fs');
 const net = require('net');
 const uuidv4 = require('uuid/v4');
 const events = require('events');
-const { NetworkError } = require('./exceptions').NetworkError;
+
+class NetworkError extends Error {
+    constructor(msg) {
+        super(msg);
+        this.name = 'NetworkError';
+    }
+}
 
 let emitters = new Map();
 let buffers = new Map();
@@ -86,9 +92,9 @@ function createNewSocket(ip, port, authentication) {
     tlsSocket.on('error', function (error) {
         throw new Error(error);
     });
-    
+
     let socketID = `${ip}:${port}`;
-    
+
     lastBytesRead.set(socketID, 0);
 
     tlsSocket.on('data', function (data) {
