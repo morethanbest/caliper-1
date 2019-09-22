@@ -14,30 +14,15 @@
         "network": {
             "nodes": [
                 {
-                    "ip": "127.0.0.1",
+                    "ip": "118.31.121.193",
                     "rpcPort": "8545",
                     "channelPort": "20200"
-                },
-                {
-                    "ip": "127.0.0.1",
-                    "rpcPort": "8546",
-                    "channelPort": "20201"
-                },
-                {
-                    "ip": "127.0.0.1",
-                    "rpcPort": "8547",
-                    "channelPort": "20202"
-                },
-                {
-                    "ip": "127.0.0.1",
-                    "rpcPort": "8548",
-                    "channelPort": "20203"
                 }
             ],
             "authentication": {
-                "key": "/root/fisco/nodes/127.0.0.1/sdk/node.key",
-                "cert": "/root/fisco/nodes/127.0.0.1/sdk/node.crt",
-                "ca": "/root/fisco/nodes/127.0.0.1/sdk/ca.crt"
+                "key": "/testchain/node.key",
+                "cert": "/testchain/node.crt",
+                "ca": "/testchain/ca.crt"
             },
             "groupID": 1,
             "timeout": 100000
