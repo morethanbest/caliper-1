@@ -114,7 +114,7 @@ class FiscoBcos extends BlockchainInterface {
 
             return await Promise.all(promises);
         } catch (error) {
-            commLogger.error(Color.error(`FISCO BCOS smart contract invoke failed: ${(error.stack ? error.stack : error)}`));
+            commLogger.error(Color.error(`FISCO BCOS smart contract invoke failed: ${(error.stack ? error.stack : JSON.stringify(error))}`));
             throw error;
         }
     }
