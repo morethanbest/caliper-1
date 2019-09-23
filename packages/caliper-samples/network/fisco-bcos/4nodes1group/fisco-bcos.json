@@ -35,9 +35,9 @@
                 }
             ],
             "authentication": {
-                "key": "packages/caliper-samples/network/fisco-bcos/4nodes1group/sdk/node.key",
-                "cert": "packages/caliper-samples/network/fisco-bcos/4nodes1group/sdk/node.crt",
-                "ca": "packages/caliper-samples/network/fisco-bcos/4nodes1group/sdk/ca.crt"
+                "key": "../caliper-samples/network/fisco-bcos/4nodes1group/sdk/node.key",
+                "cert": "../caliper-samples/network/fisco-bcos/4nodes1group/sdk/node.crt",
+                "ca": "../caliper-samples/network/fisco-bcos/4nodes1group/sdk/ca.crt"
             },
             "groupID": 1,
             "timeout": 100000

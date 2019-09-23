@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 'use strict';
 
@@ -90,10 +90,11 @@ function _createDefaultLogger() {
     winstonOptions.transports.push(new (winston.transports.Console)({
         name: 'console',
         level: 'info',
+        colorize: true,
         handleExceptions: true
     }));
 
-    let fileName = 'log/caliper-%DATE%.log';
+    let fileName = path.join(configUtil.get(configUtil.keys.Workspace, '.'), 'log/caliper-%DATE%.log');
     let dirName = path.dirname(fileName);
     if (!fs.existsSync(dirName)) {
         fs.mkdirSync(dirName);
@@ -160,6 +161,7 @@ function _createConfiguredLogger(logConfig) {
         }
         case 'file': {
             let filePath = targetSettings.filename || 'log/caliper.log';
+            filePath = path.isAbsolute(filePath) ? filePath : path.join(configUtil.get(configUtil.keys.Workspace, '.'), filePath);
             let dirName = path.dirname(filePath);
             if (!fs.existsSync(dirName)) {
                 fs.mkdirSync(dirName);
@@ -181,6 +183,7 @@ function _createConfiguredLogger(logConfig) {
         }
         case 'daily-rotate-file': {
             let filePath = targetSettings.filename || 'log/caliper-%DATE%.log';
+            filePath = path.isAbsolute(filePath) ? filePath : path.join(configUtil.get(configUtil.keys.Workspace, '.'), filePath);
             let dirName = path.dirname(filePath);
             if (!fs.existsSync(dirName)) {
                 fs.mkdirSync(dirName);
@@ -230,7 +233,7 @@ function getLogger(name, parentLogger) {
     // The global Caliper logger must be created
 
     // Check if there are any logger targets configured
-    let logConfig = configUtil.get(configUtil.keys.CoreLogging, undefined);
+    let logConfig = configUtil.get(configUtil.keys.Logging, undefined);
 
     // if not, just create a default logger with console and file targets
     if (!logConfig) {

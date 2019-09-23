@@ -14,7 +14,7 @@
 
 'use strict';
 
-const {CaliperUtils, CaliperZooClient} = require('caliper-core');
+const {CaliperUtils, CaliperZooClient, ConfigUtil} = require('@hyperledger/caliper-core');
 const chalk = require('chalk');
 const cmdUtil = require('../../utils/cmdutils');
 const path = require('path');
@@ -30,15 +30,15 @@ class StartZooClient {
     * @param {string} argv argument list from caliper command
     */
     static async handler(argv) {
-        let blockchainConfigFile;
-        let workspace;
+        let blockchainConfigFile = ConfigUtil.get(ConfigUtil.keys.NetworkConfig, undefined);
+        let workspace = ConfigUtil.get(ConfigUtil.keys.Workspace, './');
 
         // Workspace is expected to be the root location of working folders
-        workspace = path.resolve(argv.workspace);
-        blockchainConfigFile = path.isAbsolute(argv.blockchainConfig) ? argv.blockchainConfig : path.join(workspace, argv.blockchainConfig);
+        workspace = path.resolve(workspace);
+        blockchainConfigFile = path.isAbsolute(blockchainConfigFile) ? blockchainConfigFile : path.join(workspace, blockchainConfigFile);
 
-        if(!fs.existsSync(blockchainConfigFile)) {
-            throw(new Error('Configuration file ' + blockchainConfigFile + ' does not exist'));
+        if(!blockchainConfigFile || !fs.existsSync(blockchainConfigFile)) {
+            throw(new Error(`Network configuration file "${blockchainConfigFile || 'UNSET'}" does not exist`));
         }
 
         let blockchainType = '';
@@ -46,15 +46,15 @@ class StartZooClient {
         if (networkObject.hasOwnProperty('caliper') && networkObject.caliper.hasOwnProperty('blockchain')) {
             blockchainType = networkObject.caliper.blockchain;
         } else {
-            throw new Error('The ' + blockchainConfigFile + ' has no blockchain type');
+            throw new Error('The configuration file [' + blockchainConfigFile + '] is missing its "caliper.blockchain" attribute');
         }
 
         try {
             cmdUtil.log(chalk.blue.bold('Starting zookeeper client of type ' + blockchainType));
-            const {ClientFactory} = require('caliper-' + blockchainType);
+            const {ClientFactory} = require('@hyperledger/caliper-' + blockchainType);
             const clientFactory = new ClientFactory(blockchainConfigFile, workspace);
 
-            const zooClient = new CaliperZooClient(argv.address, clientFactory, workspace);
+            const zooClient = new CaliperZooClient(ConfigUtil.get(ConfigUtil.keys.ZooAddress, undefined), clientFactory, workspace);
             zooClient.start();
         } catch (err) {
             throw err;

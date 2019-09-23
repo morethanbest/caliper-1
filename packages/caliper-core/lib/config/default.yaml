@@ -1,3 +1,4 @@
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -9,34 +10,75 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 caliper:
+    # Settings related to the binding command
+    bind:
+        # The name of the platform to bind to
+        sut:
+        # The SDK version of the platform to bind to
+        sdk:
+        # The CWD to use for the binding (i.e., npm install) command
+        cwd:
+        # The additional args to pass to the binding (i.e., npm install) command
+        args:
+    # Workspace directory that contains all configuration information
+    workspace: './'
+    # Path to the benchmark workload file that describes the test client(s), test rounds and monitor
+    benchconfig:
+    # Path to the blockchain configuration file that contains information required to interact with the SUT
+    networkconfig:
+    # Address of a ZooKeeper node used by distributed clients
+    zooaddress:
+    # Path to a zookeeper service yaml file
+    zooconfig:
+    # Sets the frequency of the progress reports in milliseconds
+    txupdatetime: 1000
+    # Configurations related to the logging mechanism
+    logging:
+        # Defines a console target with info level
+        consolelogger:
+            target: console
+            level: info
+        # Defines a daily rotating file target with debug level
+        filelogger:
+            target: daily-rotate-file
+            level: debug
+            filename: log/caliper-%DATE%.log
+            datePattern: YYYY-MM-DD-HH
+            maxSize: 5m
+            zippedArchive: true
 
-    # Configurations related to core Caliper behaviors
-    core:
-        # Sets the frequency of the progress reports in milliseconds
-        txupdatetime: 1000
-        # Indicates whether to skip the start command script in the network configuration file, if provided
-        skipstartscript: false
-        # Indicates whether to skip the end command script in the network configuration file, if provided
-        skipendscript: false
-        # Configurations related to the logging mechanism
-        logging:
-            # Defines a console target with info level
-            consolelogger:
-                target: console
-                level: info
-            # Defines a daily rotating file target with debug level
-            filelogger:
-                target: daily-rotate-file
-                level: debug
-                filename: log/caliper-%DATE%.log
-                datePattern: YYYY-MM-DD-HH
-                maxSize: 5m
-                zippedArchive: true
+    # Caliper flow options
+    flow:
+        # Skip options
+        skip:
+            # Indicates whether to skip the start command script in the network configuration file, if provided
+            start: false
+            # Indicates whether to skip the init phase of the benchmark
+            init: false
+            # Indicates whether to skip the smart contract install phase of the benchmark
+            install: false
+            # Indicates whether to skip the test phase of the benchmark
+            test: false
+            # Indicates whether to skip the end command script in the network configuration file, if provided
+            end: false
+        # Only options
+        only:
+            # Indicates whether to only perform the start command script in the network configuration file, if provided
+            start: false
+            # Indicates whether to only perform the init phase of the benchmark
+            init: false
+            # Indicates whether to only perform the smart contract install phase of the benchmark
+            install: false
+            # Indicates whether to only perform the test phase of the benchmark
+            test: false
+            # Indicates whether to only perform the end command script in the network configuration file, if provided
+            end: false
 
     # Configurations related to the Fabric CCP adapter
-    fabricccp:
+    fabric:
         # Sets the sleep behaviors after different init actions
         sleepafter:
             # The time in milliseconds to sleep after creating the channels (if created channels at all)
@@ -77,5 +119,4 @@ caliper:
         # Indicates whether to use the Fabric discovery mechanism (via Gateway API)
         discovery: false
 
-    fabric:
     sawtooth:

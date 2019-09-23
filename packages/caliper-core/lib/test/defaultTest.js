@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 
 'use strict';
@@ -77,32 +77,6 @@ class DefaultTest {
             // condition for time based or number based test driving
             if (args.txNumber) {
                 msg.numb = testRounds[i];
-                // File information for reading or writing transaction request
-                msg.txFile = {roundLength: testRounds.length, roundCurrent: i, txMode: args.txMode};
-                if (args.txMode && args.txMode.type === 'file-write') {
-                    logger.info('------ Prepare(file-write) waiting ------');
-                    msg.txFile.readWrite = 'write';
-                    msg.rateControl = {type: 'fixed-rate', opts: {tps: 400}};
-                    try {
-                        await this.clientOrchestrator.startTest(msg, this.clientArgs, function(){}, testLabel, this.clientFactory);
-                        msg.numb = testRounds[i];
-                        msg.txFile.readWrite = 'read';
-                        msg.rateControl = args.rateControl[i] ? args.rateControl[i] : {type:'fixed-rate', 'opts' : {'tps': 1}};
-                        if(i === (testRounds.length - 1)) {
-                            logger.info('Waiting 5 seconds...');
-                            logger.info('------ Prepare(file-write) success------');
-                            await CaliperUtils.sleep(5000);
-                        }
-                    } catch (err) {
-                        logger.error('------Prepare(file-write) failed------');
-                        args.txMode.type = 'file-no';
-                    }
-
-                } else if(args.txMode && args.txMode.type === 'file-read'){
-                    msg.txFile.readWrite = 'read';
-                } else {
-                    msg.txFile.readWrite = 'no';
-                }
             } else if (args.txDuration) {
                 msg.txDuration = testRounds[i];
             } else {
