@@ -15,8 +15,8 @@
             "nodes": [
                 {
                     "ip": "127.0.0.1",
-                    "rpcPort": "8545",
-                    "channelPort": "20200"
+                    "rpcPort": "8550",
+                    "channelPort": "20205"
                 }
             ],
             "authentication": {
