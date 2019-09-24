@@ -84,7 +84,8 @@ function createNewSocket(ip, port, authentication) {
     let clientOptions = {
         rejectUnauthorized: false,
         secureContext: secureContext,
-        socket: socket
+        socket: socket,
+        ciphers: 'DES-CBC3-SHA'
     };
 
     let tlsSocket = tls.connect(clientOptions);
