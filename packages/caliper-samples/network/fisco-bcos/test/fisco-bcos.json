@@ -20,9 +20,9 @@
                 }
             ],
             "authentication": {
-                "key": "/testchain/node.key",
-                "cert": "/testchain/node.crt",
-                "ca": "/testchain/ca.crt"
+                "key": "/root/47.99.242.129/sdk/node.key",
+                "cert": "/root/47.99.242.129/sdk/node.crt",
+                "ca": "/root/47.99.242.129/sdk/ca.crt"
             },
             "groupID": 1,
             "timeout": 100000

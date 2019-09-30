@@ -73,7 +73,6 @@ function createNewSocket(ip, port, authentication) {
         key: fs.readFileSync(authentication.key),
         cert: fs.readFileSync(authentication.cert),
         ca: fs.readFileSync(authentication.ca),
-        ecdhCurve: 'secp256k1',
     };
 
     let secureContext = tls.createSecureContext(secureContextOptions);
