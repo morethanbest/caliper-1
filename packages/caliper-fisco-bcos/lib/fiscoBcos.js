@@ -1,26 +1,28 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 'use strict';
 
 const {
     BlockchainInterface,
-    CaliperUtils,
+    CaliperUtils
 } = require('caliper-core');
 const installSmartContractImpl = require('./installSmartContract');
 const invokeSmartContractImpl = require('./invokeSmartContract');
-const Color = require('./constant').Color;
+const generateRawTransactionImpl = require('./generateRawTransactions');
+const sendRawTransactionImpl = require('./sendRawTransactions');
+const Color = require('./common');
 const commLogger = CaliperUtils.getLogger('fiscoBcos.js');
 
 /**
@@ -36,6 +38,7 @@ class FiscoBcos extends BlockchainInterface {
         super(config_path);
         this.bcType = 'fisco-bcos';
         this.workspaceRoot = workspace_root;
+        this.fiscoBcosSettings = CaliperUtils.parseYaml(this.configPath)['fisco-bcos'];
     }
 
     /**
@@ -95,7 +98,6 @@ class FiscoBcos extends BlockchainInterface {
      * @return {Promise<object>} The promise for the result of the execution.
      */
     async invokeSmartContract(context, contractID, contractVer, args, timeout) {
-        const fiscoBcosSettings = CaliperUtils.parseYaml(this.configPath)['fisco-bcos'];
         let promises = [];
         try {
             args.forEach((arg) => {
@@ -109,7 +111,7 @@ class FiscoBcos extends BlockchainInterface {
                         fcArgs.push(arg[key].toString());
                     }
                 }
-                promises.push(invokeSmartContractImpl.run(context, fiscoBcosSettings, contractID, fcn, fcArgs, this.workspaceRoot));
+                promises.push(invokeSmartContractImpl.run(context, this.fiscoBcosSettings, contractID, fcn, fcArgs, this.workspaceRoot));
             });
 
             return await Promise.all(promises);
@@ -121,22 +123,42 @@ class FiscoBcos extends BlockchainInterface {
 
     /**
      * Query state from the ledger
-     * @param {Object} context context object from getContext
-     * @param {String} contractID identity of the contract
-     * @param {String} contractVer version of the contract
+     * @param {Object} context The FISCO BCOS context returned by {getContext}
+     * @param {String} contractID Identity of the contract
+     * @param {String} contractVer Version of the contract
      * @param {String} key lookup key
      * @param {String} fcn The smart contract query function name
-     * @return {any} The result of the query.
+     * @return {Promise<object>} The result of the query.
      */
     async queryState(context, contractID, contractVer, key, fcn) {
-        const fiscoBcosSettings = CaliperUtils.parseYaml(this.configPath)['fisco-bcos'];
         try {
-            let result = await invokeSmartContractImpl.run(context, fiscoBcosSettings, contractID, fcn, key, this.workspaceRoot, true);
-            return result;
+            return invokeSmartContractImpl.run(context, this.fiscoBcosSettings, contractID, fcn, key, this.workspaceRoot, true);
         } catch (error) {
             commLogger.error(Color.error(`FISCO BCOS smart contract query failed: ${(error.stack ? error.stack : error)}`));
             throw error;
         }
+    }
+
+    /**
+     * Generate an raw transaction and store in local file
+     * @param {Object} context The FISCO BCOS context returned by {getContext}
+     * @param {String} contractID Identity of the contract
+     * @param {Object} arg Arguments of the transaction
+     * @param {String} file File path which will be used to store then transaction
+     * @return {TaskStatus} Indicates whether the transaction is written to the file successfully or not
+     */
+    async generateRawTransaction(context, contractID, arg, file) {
+        return generateRawTransactionImpl.run(this.fiscoBcosSettings, this.workspaceRoot, context, contractID, arg, file);
+    }
+
+    /**
+     * Send raw transactions
+     * @param {Object} context The FISCO BCOS context returned by {getContext}
+     * @param {Array} transactions List of raw transactions
+     * @return {Promise} The promise for the result of the execution
+     */
+    async sendRawTransaction(context, transactions) {
+        return sendRawTransactionImpl.run(this.fiscoBcosSettings, context, transactions);
     }
 }
 

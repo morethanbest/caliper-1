@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 'use strict';
 
@@ -23,10 +23,9 @@ const isArray = require('isarray');
 const web3Sync = require('./web3lib/web3sync');
 const channelPromise = require('./channelPromise');
 const requestPromise = require('request-promise');
-const Color = require('./constant').Color;
+const Color = require('./common').Color;
 const assert = require('assert');
 const events = require('events');
-const os = require('os');
 const commLogger = CaliperUtils.getLogger('fiscoBcosApi.js');
 
 /**
@@ -208,7 +207,7 @@ module.exports.call = async function (networkConfig, from, to, func, params) {
     return channelPromise(node, networkConfig.authentication, requestData, networkConfig.timeout);
 };
 
-module.exports.sendRawTransaction = async function (networkConfig, account, privateKey, to, func, params) {
+module.exports.generateRawTransaction = async function (networkConfig, account, privateKey, to, func, params) {
     if (!isArray(params)) {
         params = [params];
     }
@@ -216,15 +215,24 @@ module.exports.sendRawTransaction = async function (networkConfig, account, priv
     let blockNumber = await getCurrentBlockNumber(networkConfig);
     let groupID = networkConfig.groupID;
     let signTx = web3Sync.getSignTx(groupID, account, privateKey, to, func, params, blockNumber + 500);
+    return signTx;
+};
+
+module.exports.sendRawTransaction = async function (networkConfig, tx) {
     let requestData = {
         'jsonrpc': '2.0',
         'method': 'sendRawTransaction',
-        'params': [networkConfig.groupID, signTx],
+        'params': [networkConfig.groupID, tx],
         'id': 1
     };
 
     let node = selectNode(networkConfig.nodes);
     return channelPromise(node, networkConfig.authentication, requestData, networkConfig.timeout);
+};
+
+module.exports.sendTransaction = async function (networkConfig, account, privateKey, to, func, params) {
+    let signTx = await this.generateRawTransaction(networkConfig, account, privateKey, to, func, params);
+    return this.sendRawTransaction(networkConfig, signTx);
 };
 
 module.exports.getTxReceipt = async function (networkConfig, txHash) {

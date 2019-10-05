@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 'use strict';
 
@@ -20,7 +20,14 @@ const net = require('net');
 const uuidv4 = require('uuid/v4');
 const events = require('events');
 
+/**
+ * NetworkError exception class thrown in socket connection
+ */
 class NetworkError extends Error {
+    /**
+     *
+     * @param {String} msg exception message
+     */
     constructor(msg) {
         super(msg);
         this.name = 'NetworkError';
@@ -31,11 +38,11 @@ let emitters = new Map();
 let buffers = new Map();
 let sockets = new Map();
 let lastBytesRead = new Map();
+
 /**
  * Parse response returned by node
  * @param {Buffer} response Node's response
  */
-
 function parseResponse(response) {
     let seq = response.slice(6, 38).toString();
     let result = JSON.parse(response.slice(42).toString());
@@ -73,6 +80,7 @@ function createNewSocket(ip, port, authentication) {
         key: fs.readFileSync(authentication.key),
         cert: fs.readFileSync(authentication.cert),
         ca: fs.readFileSync(authentication.ca),
+        ecdhCurve: 'secp256k1',
     };
 
     let secureContext = tls.createSecureContext(secureContextOptions);
@@ -168,7 +176,7 @@ function packageData(data) {
 
 /**
  * Clear context when a message got response or timeout
- * @param {Socket} socket The socket who sends the message
+ * @param {String} uuid The ID of an `channelPromise`request
  */
 function clearContext(uuid) {
     clearTimeout(emitters.get(uuid).timer);
@@ -182,6 +190,7 @@ function clearContext(uuid) {
  * @param {Object} authentication A JSON object contains certificate file path, private key file path and CA file path
  * @param {String} data JSON string of load
  * @param {Number} timeout Timeout to wait response
+ * @param {Boolean} readOnly Is this request read-only?
  * @return {Promise} a promise which will be resolved when the request is satisfied
  */
 function channelPromise(node, authentication, data, timeout, readOnly = false) {
@@ -203,7 +212,7 @@ function channelPromise(node, authentication, data, timeout, readOnly = false) {
     let packagedData = dataPackage.packagedData;
     let channelPromise = new Promise(async (resolve, reject) => {
         let eventEmitter = new events.EventEmitter();
-        Object.defineProperty(eventEmitter, "readOnly", {
+        Object.defineProperty(eventEmitter, 'readOnly', {
             value: readOnly,
             writable: false,
             configurable: false,

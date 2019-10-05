@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 'use strict';
 
@@ -67,7 +67,7 @@ function getTxData(func, params) {
 
 /**
  * get signed transaction data
- * @param {Number} groupId
+ * @param {Number} groupId ID of the group where this transaction will be sent to
  * @param {Buffer} account user account
  * @param {Buffer} privateKey private key
  * @param {Buffer} to target address
@@ -96,7 +96,7 @@ function getSignTx(groupId, account, privateKey, to, func, params, blockLimit) {
 
 /**
  * get signed deploy tx
- * @param {Number} groupId
+ * @param {Number} groupId ID of the group where this transaction will be sent to
  * @param {Buffer} account user account
  * @param {Buffer} privateKey private key
  * @param {Buffer} bin contract bin
