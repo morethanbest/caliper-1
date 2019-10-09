@@ -14,24 +14,9 @@
         "network": {
             "nodes": [
                 {
-                    "ip": "172.16.60.76",
+                    "ip": "172.16.60.77",
                     "rpcPort": "8550",
                     "channelPort": "20205"
-                },
-                {
-                    "ip": "172.16.60.77",
-                    "rpcPort": "8545",
-                    "channelPort": "20200"
-                },
-                {
-                    "ip": "172.16.60.78",
-                    "rpcPort": "8545",
-                    "channelPort": "20200"
-                },
-                {
-                    "ip": "172.16.60.79",
-                    "rpcPort": "8545",
-                    "channelPort": "20200"
                 }
             ],
             "authentication": {
