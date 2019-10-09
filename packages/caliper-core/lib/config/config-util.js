@@ -77,7 +77,7 @@ const keys = {
         Only: {
             Start: 'caliper-flow-only-start',
             Init: 'caliper-flow-only-init',
-            Install: 'caliper-flow-only-install',
+            installInstall: 'caliper-flow-only-install',
             Test: 'caliper-flow-only-test',
             End: 'caliper-flow-only-end'
         }

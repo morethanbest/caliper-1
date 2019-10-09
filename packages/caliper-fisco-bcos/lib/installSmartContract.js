@@ -58,7 +58,7 @@ module.exports.run = async function (fiscoBcosSettings, workspaceRoot) {
                         commLogger.error(Color.error(`Deploy receipt status error: ${JSON.stringify(body)}`));
                     }
                 }).catch((reason)=>{
-                    commLogger.error(Color.error(`Depolying error: ${reason}`));
+                    commLogger.error(Color.error(`Deploying error: ${JSON.stringify(reason)}`));
                 });
 
                 await deployPromise;
