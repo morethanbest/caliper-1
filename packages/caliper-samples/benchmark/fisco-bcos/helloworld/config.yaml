@@ -32,11 +32,11 @@ test:
   - label: set
     description: Test performance of setting name
     txNumber:
-    - 10000
+    - 100
     rateControl:
     - type: fixed-rate
       opts:
-        tps: 1000
+        tps: 10
     callback: benchmark/fisco-bcos/helloworld/set.js
 monitor:
   type:
